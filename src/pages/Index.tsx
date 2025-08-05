@@ -5,6 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Shield, Lock, Eye, Zap, Bug, Code, AlertTriangle, Database } from "lucide-react";
 import PasswordCracker from "@/components/PasswordCracker";
+import PhishingSimulator from "@/components/PhishingSimulator";
+import VulnerabilityScanner from "@/components/VulnerabilityScanner";
+import SqlInjectionLab from "@/components/SqlInjectionLab";
 
 const tools = [
   {
@@ -99,15 +102,21 @@ const Index = () => {
     switch (selectedTool) {
       case "password-cracker":
         return <PasswordCracker />;
+      case "phishing-sim":
+        return <PhishingSimulator />;
+      case "vuln-scanner":
+        return <VulnerabilityScanner />;
+      case "sql-injection":
+        return <SqlInjectionLab />;
       default:
         return (
           <Card className="terminal-effect">
             <CardHeader>
-              <CardTitle className="text-cyber">Select a Security Tool</CardTitle>
-              <CardDescription>Choose from the available cybersecurity tools to start learning</CardDescription>
+              <CardTitle className="text-cyber">Tool Coming Soon</CardTitle>
+              <CardDescription>This security tool is under development</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">This tool is coming soon! Stay tuned for more security challenges.</p>
+              <p className="text-muted-foreground">More cybersecurity tools and challenges are being added. Check back soon!</p>
             </CardContent>
           </Card>
         );
