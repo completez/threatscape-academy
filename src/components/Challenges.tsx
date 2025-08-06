@@ -12,6 +12,7 @@ import { supabase, ChallengeAttempt } from "@/lib/supabase";
 import SqlInjectionDemo from "./challenges/SqlInjectionDemo";
 import XssDemo from "./challenges/XssDemo";
 import CryptoDemo from "./challenges/CryptoDemo";
+import BufferOverflowDemo from "./challenges/BufferOverflowDemo";
 
 interface Challenge {
   id: string;
@@ -226,6 +227,30 @@ const Challenges = () => {
       ]
     },
     {
+      id: "buffer-overflow-basic",
+      title: "Buffer Overflow Challenge / ท้าทาย Buffer Overflow",
+      description: "ใช้ประโยชน์จากช่องโหว่ Buffer Overflow เพื่อยึดครองระบบ / Exploit buffer overflow vulnerabilities to gain system control",
+      category: "Binary Exploitation",
+      difficulty: "Expert",
+      points: 400,
+      timeLimit: 45,
+      completed: false,
+      attempts: 0,
+      successRate: 18,
+      scenario: "คุณพบแอปพลิเคชันที่มีช่องโหว่ Buffer Overflow ในการจัดการข้อมูลป้อนเข้า ใช้เทคนิคการล้นบัฟเฟอร์เพื่อควบคุมการทำงานของโปรแกรม / You've discovered an application with a buffer overflow vulnerability in input handling. Use buffer overflow techniques to control program execution.",
+      objectives: [
+        "วิเคราะห์ขนาดบัฟเฟอร์ที่เสี่ยงภัย / Analyze the vulnerable buffer size",
+        "สร้าง payload ที่ทำให้เกิด overflow / Create a payload that causes overflow", 
+        "เขียนทับ return address / Overwrite the return address",
+        "ได้รับสิทธิ์ Administrator / Achieve administrator access"
+      ],
+      hints: [
+        "บัฟเฟอร์มีขนาด 16 ตัวอักษร ลองใส่ข้อมูลเกินกว่านั้น / Buffer is 16 characters, try inputting more data",
+        "ใช้ตัวอักษร 'A' หลายๆ ตัวเพื่อทดสอบ / Use multiple 'A' characters to test",
+        "ดูการเปลี่ยนแปลงใน memory state / Watch for changes in memory state"
+      ]
+    },
+    {
       id: "privilege-escalation",
       title: "Linux Privilege Escalation",
       description: "Escalate privileges from a low-privileged user to root",
@@ -437,9 +462,12 @@ const Challenges = () => {
                 {selectedChallenge.id === "cryptographic-analysis" && (
                   <CryptoDemo onFlagFound={handleFlagFound} />
                 )}
+                {selectedChallenge.id === "buffer-overflow-basic" && (
+                  <BufferOverflowDemo onFlagFound={handleFlagFound} />
+                )}
                 
                 {/* Generic answer submission for other challenges */}
-                {!["sql-injection-basic", "advanced-xss", "cryptographic-analysis"].includes(selectedChallenge.id) && (
+                {!["sql-injection-basic", "advanced-xss", "cryptographic-analysis", "buffer-overflow-basic"].includes(selectedChallenge.id) && (
                   <>
                     <div>
                       <h3 className="font-semibold mb-2">Your Answer</h3>
