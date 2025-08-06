@@ -1,10 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
 
-// These will be automatically provided by Lovable
+// These will be automatically provided by Lovable when Supabase is connected
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Create client only if environment variables are available
+export const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null
+
+// Helper to check if Supabase is available
+export const isSupabaseConnected = () => Boolean(supabase)
 
 // Database types
 export interface TutorialProgress {

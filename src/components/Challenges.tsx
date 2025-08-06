@@ -44,6 +44,15 @@ const Challenges = () => {
   }, []);
 
   const loadChallengeAttempts = async () => {
+    if (!supabase) {
+      // Fallback to localStorage when Supabase isn't connected
+      const stored = localStorage.getItem(`challenges_${userId}`);
+      if (stored) {
+        setChallengeAttempts(JSON.parse(stored));
+      }
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('challenge_attempts')
@@ -58,21 +67,32 @@ const Challenges = () => {
   };
 
   const saveChallengeAttempt = async (challengeId: string, completed: boolean, flag?: string, timeTaken?: number) => {
-    try {
-      const attempt = challengeAttempts.find(a => a.challenge_id === challengeId);
-      const newAttempts = (attempt?.attempts || 0) + 1;
-      
-      const attemptData = {
-        challenge_id: challengeId,
-        user_id: userId,
-        completed,
-        attempts: newAttempts,
-        score: completed ? challenges.find(c => c.id === challengeId)?.points || 0 : 0,
-        time_taken: timeTaken || 0,
-        flag_found: flag,
-        updated_at: new Date().toISOString()
-      };
+    const attempt = challengeAttempts.find(a => a.challenge_id === challengeId);
+    const newAttempts = (attempt?.attempts || 0) + 1;
+    
+    const attemptData = {
+      id: attempt?.id || `${challengeId}_${userId}`,
+      challenge_id: challengeId,
+      user_id: userId,
+      completed,
+      attempts: newAttempts,
+      score: completed ? challenges.find(c => c.id === challengeId)?.points || 0 : 0,
+      time_taken: timeTaken || 0,
+      flag_found: flag,
+      created_at: attempt?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
 
+    if (!supabase) {
+      // Fallback to localStorage when Supabase isn't connected
+      const updatedAttempts = challengeAttempts.filter(a => a.challenge_id !== challengeId);
+      updatedAttempts.push(attemptData);
+      setChallengeAttempts(updatedAttempts);
+      localStorage.setItem(`challenges_${userId}`, JSON.stringify(updatedAttempts));
+      return;
+    }
+
+    try {
       const { error } = await supabase
         .from('challenge_attempts')
         .upsert(attemptData);

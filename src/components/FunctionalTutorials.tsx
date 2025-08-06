@@ -258,6 +258,15 @@ const result = stmt.get(userId);`
   }, []);
 
   const loadTutorialProgress = async () => {
+    if (!supabase) {
+      // Fallback to localStorage when Supabase isn't connected
+      const stored = localStorage.getItem(`tutorials_${userId}`);
+      if (stored) {
+        setTutorialProgress(JSON.parse(stored));
+      }
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('tutorial_progress')
@@ -272,29 +281,47 @@ const result = stmt.get(userId);`
   };
 
   const updateProgress = async (tutorialId: string, stepIndex: number, completed: boolean = false) => {
-    try {
-      const existingProgress = tutorialProgress.find(p => p.tutorial_id === tutorialId);
-      const tutorial = tutorials.find(t => t.id === tutorialId);
+    const existingProgress = tutorialProgress.find(p => p.tutorial_id === tutorialId);
+    const tutorial = tutorials.find(t => t.id === tutorialId);
+    
+    if (!tutorial) return;
+
+    const stepsCompleted = existingProgress?.steps_completed || [];
+    if (!stepsCompleted.includes(stepIndex)) {
+      stepsCompleted.push(stepIndex);
+    }
+
+    const progressPercent = Math.round((stepsCompleted.length / tutorial.steps.length) * 100);
+    const isCompleted = completed || stepsCompleted.length === tutorial.steps.length;
+
+    const progressData = {
+      id: existingProgress?.id || `${tutorialId}_${userId}`,
+      tutorial_id: tutorialId,
+      user_id: userId,
+      progress: progressPercent,
+      completed: isCompleted,
+      steps_completed: stepsCompleted,
+      created_at: existingProgress?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    if (!supabase) {
+      // Fallback to localStorage when Supabase isn't connected
+      const updatedProgress = tutorialProgress.filter(p => p.tutorial_id !== tutorialId);
+      updatedProgress.push(progressData);
+      setTutorialProgress(updatedProgress);
+      localStorage.setItem(`tutorials_${userId}`, JSON.stringify(updatedProgress));
       
-      if (!tutorial) return;
-
-      const stepsCompleted = existingProgress?.steps_completed || [];
-      if (!stepsCompleted.includes(stepIndex)) {
-        stepsCompleted.push(stepIndex);
+      if (isCompleted) {
+        toast({
+          title: "Tutorial Completed!",
+          description: `You've completed "${tutorial.title}"`,
+        });
       }
+      return;
+    }
 
-      const progressPercent = Math.round((stepsCompleted.length / tutorial.steps.length) * 100);
-      const isCompleted = completed || stepsCompleted.length === tutorial.steps.length;
-
-      const progressData = {
-        tutorial_id: tutorialId,
-        user_id: userId,
-        progress: progressPercent,
-        completed: isCompleted,
-        steps_completed: stepsCompleted,
-        updated_at: new Date().toISOString()
-      };
-
+    try {
       const { error } = await supabase
         .from('tutorial_progress')
         .upsert(progressData);
