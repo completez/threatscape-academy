@@ -8,6 +8,10 @@ import PasswordCracker from "@/components/PasswordCracker";
 import PhishingSimulator from "@/components/PhishingSimulator";
 import VulnerabilityScanner from "@/components/VulnerabilityScanner";
 import SqlInjectionLab from "@/components/SqlInjectionLab";
+import MitmAttackSimulator from "@/components/MitmAttackSimulator";
+import DosSimulator from "@/components/DosSimulator";
+import XssPlayground from "@/components/XssPlayground";
+import CryptographyAttacks from "@/components/CryptographyAttacks";
 
 const tools = [
   {
@@ -108,6 +112,14 @@ const Index = () => {
         return <VulnerabilityScanner />;
       case "sql-injection":
         return <SqlInjectionLab />;
+      case "mitm-attack":
+        return <MitmAttackSimulator />;
+      case "dos-simulator":
+        return <DosSimulator />;
+      case "xss-lab":
+        return <XssPlayground />;
+      case "crypto-attacks":
+        return <CryptographyAttacks />;
       default:
         return (
           <Card className="terminal-effect">
