@@ -1,11 +1,9 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Shield, Lock, Eye, Zap, Bug, Code, AlertTriangle, Database, LogOut, User } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { Shield, Lock, Eye, Zap, Bug, Code, AlertTriangle, Database } from "lucide-react";
 import PasswordCracker from "@/components/PasswordCracker";
 import PhishingSimulator from "@/components/PhishingSimulator";
 import VulnerabilityScanner from "@/components/VulnerabilityScanner";
@@ -97,29 +95,6 @@ const Index = () => {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
   const [completedLabs, setCompletedLabs] = useState<string[]>([]);
-  const { user, loading, signOut } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate("/auth");
-    }
-  }, [user, loading, navigate]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Shield className="h-12 w-12 text-primary mx-auto animate-pulse" />
-          <p className="text-muted-foreground">กำลังโหลด... / Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -206,39 +181,27 @@ const Index = () => {
       <div className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10" />
         <div className="relative max-w-7xl mx-auto px-6 py-16">
-          <div className="flex justify-between items-start mb-8">
-            <div className="text-center flex-1 space-y-6">
-              <h1 className="text-5xl font-bold text-cyber">
-                ThreatScape Academy
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                เรียนรู้ Ethical Hacking และ Cybersecurity ผ่านการจำลองสถานการณ์จริง<br />
-                Learn ethical hacking and cybersecurity through hands-on simulations
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">ยินดีต้อนรับ / Welcome</p>
-                <p className="font-semibold">{user.email}</p>
+          <div className="text-center space-y-6">
+            <h1 className="text-5xl font-bold text-cyber">
+              Cyber Security Playground
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Learn ethical hacking and cybersecurity through hands-on simulations. 
+              Practice attacks in a safe environment and understand how to defend against them.
+            </p>
+            <div className="flex items-center justify-center gap-6 mt-8">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-primary">{tools.length}</div>
+                <div className="text-sm text-muted-foreground">Security Tools</div>
               </div>
-              <Button variant="outline" onClick={() => signOut()} className="flex items-center gap-2">
-                <LogOut className="h-4 w-4" />
-                ออกจากระบบ / Logout
-              </Button>
-            </div>
-          </div>
-          <div className="flex items-center justify-center gap-6 mt-8">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{tools.length}</div>
-              <div className="text-sm text-muted-foreground">Security Tools</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-secondary">{completedLabs.length}</div>
-              <div className="text-sm text-muted-foreground">Labs Completed</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-accent">100%</div>
-              <div className="text-sm text-muted-foreground">Safe Environment</div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-secondary">{completedLabs.length}</div>
+                <div className="text-sm text-muted-foreground">Labs Completed</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-accent">100%</div>
+                <div className="text-sm text-muted-foreground">Safe Environment</div>
+              </div>
             </div>
           </div>
         </div>
@@ -247,8 +210,8 @@ const Index = () => {
       {/* Tools Grid */}
       <div className="max-w-7xl mx-auto p-6">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-2">เครื่องมือและห้องปฏิบัติการความปลอดภัย / Security Tools & Labs</h2>
-          <p className="text-muted-foreground">เลือกเครื่องมือเพื่อเริ่มต้นการเรียนรู้ Cybersecurity / Choose a tool to start your cybersecurity journey</p>
+          <h2 className="text-2xl font-bold mb-2">Security Tools & Labs</h2>
+          <p className="text-muted-foreground">Choose a tool to start your cybersecurity journey</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

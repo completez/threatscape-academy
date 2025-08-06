@@ -12,7 +12,6 @@ import { supabase, ChallengeAttempt } from "@/lib/supabase";
 import SqlInjectionDemo from "./challenges/SqlInjectionDemo";
 import XssDemo from "./challenges/XssDemo";
 import CryptoDemo from "./challenges/CryptoDemo";
-import BufferOverflowDemo from "./challenges/BufferOverflowDemo";
 
 interface Challenge {
   id: string;
@@ -108,170 +107,146 @@ const Challenges = () => {
   const challenges: Challenge[] = [
     {
       id: "weak-password",
-      title: "The Weak Password Challenge / ท้าทายรหัสผ่านที่อ่อนแอ",
-      description: "ค้นหารหัสผ่านของพนักงานผ่านเทคนิค Social Engineering / Find the password used by an employee through social engineering techniques",
-      category: "Social Engineering / วิศวกรรมสังคม",
+      title: "The Weak Password Challenge",
+      description: "Find the password used by an employee through social engineering techniques",
+      category: "Social Engineering",
       difficulty: "Easy",
       points: 100,
       timeLimit: 15,
       completed: true,
       attempts: 2,
       successRate: 85,
-      scenario: "คุณกำลังทำการทดสอบการเจาะระบบให้กับบริษัท Acme Corp และพบว่า John Smith ผู้จัดการฝ่ายการตลาด ใช้รหัสผ่านที่คาดเดาได้ ใช้เทคนิค OSINT เพื่อหารหัสผ่านที่เป็นไปได้ / You're conducting a penetration test for Acme Corp. You've discovered that John Smith, a marketing manager, uses predictable passwords. Using OSINT techniques, find his likely password.",
+      scenario: "You're conducting a penetration test for Acme Corp. You've discovered that John Smith, a marketing manager, uses predictable passwords. Using OSINT techniques, find his likely password.",
       objectives: [
-        "รวบรวมข้อมูลเกี่ยวกับ John Smith จากแหล่งข้อมูลสาธารณะ / Gather information about John Smith from public sources",
-        "วิเคราะห์โซเชียลมีเดียของเขาเพื่อหาแพทเทิร์นรหัสผ่าน / Analyze his social media for password patterns",
-        "ระบุรูปแบบรหัสผ่านที่เป็นไปได้ / Identify his likely password format",
-        "ส่งรหัสผ่านที่ถูกต้อง / Submit the correct password"
+        "Gather information about John Smith from public sources",
+        "Analyze his social media for password patterns",
+        "Identify his likely password format",
+        "Submit the correct password"
       ],
       hints: [
-        "ตรวจสอบโปรไฟล์ LinkedIn ของเขาเพื่อหาวันที่สำคัญ / Check his LinkedIn profile for important dates",
-        "มองหาชื่อสัตว์เลี้ยงในโพสต์โซเชียลมีเดีย / Look for pet names in his social media posts",
-        "พิจารณาแพทเทิร์นรหัสผ่านทั่วไป (ชื่อ + ปี) / Consider common password patterns (name + year)"
+        "Check his LinkedIn profile for important dates",
+        "Look for pet names in his social media posts",
+        "Consider common password patterns (name + year)"
       ]
     },
     {
       id: "sql-injection-basic",
-      title: "SQL Injection Bypass / การหลีกเลี่ยง SQL Injection",
-      description: "หลีกเลี่ยงฟอร์มเข้าสู่ระบบโดยใช้เทคนิค SQL injection / Bypass the login form using SQL injection techniques",
-      category: "Web Security / ความปลอดภัยเว็บ",
+      title: "SQL Injection Bypass",
+      description: "Bypass the login form using SQL injection techniques",
+      category: "Web Security",
       difficulty: "Medium",
       points: 250,
       timeLimit: 30,
       completed: false,
       attempts: 1,
       successRate: 62,
-      scenario: "คุณพบฟอร์มเข้าสู่ระบบที่ดูเหมือนจะมีช่องโหว่ SQL injection ฟอร์มนี้ใช้การตรวจสอบอินพุตพื้นฐานแต่ไม่ได้ทำความสะอาดข้อมูลผู้ใช้อย่างถูกต้อง / You've found a login form that appears vulnerable to SQL injection. The form uses basic input validation but doesn't sanitize user input properly.",
+      scenario: "You've found a login form that appears vulnerable to SQL injection. The form uses basic input validation but doesn't sanitize user input properly.",
       objectives: [
-        "ระบุพารามิเตอร์ที่มีช่องโหว่ / Identify the vulnerable parameter",
-        "สร้าง SQL injection payload / Craft a SQL injection payload",
-        "หลีกเลี่ยงการยืนยันตัวตนโดยไม่ใช้ข้อมูลรับรองที่ถูกต้อง / Bypass authentication without valid credentials",
-        "เข้าถึงแผงผู้ดูแลระบบ / Access the admin panel"
+        "Identify the vulnerable parameter",
+        "Craft a SQL injection payload",
+        "Bypass authentication without valid credentials",
+        "Access the admin panel"
       ],
       hints: [
-        "ลองใช้ SQL injection payload พื้นฐานในช่องชื่อผู้ใช้ / Try basic SQL injection payloads in the username field",
-        "พิจารณาใช้ comment syntax เพื่อหลีกเลี่ยงการตรวจสอบรหัสผ่าน / Consider comment syntax to bypass password validation",
-        "มองหาข้อความแสดงข้อผิดพลาดที่เปิดเผยโครงสร้างฐานข้อมูล / Look for error messages that reveal database structure"
+        "Try basic SQL injection payloads in the username field",
+        "Consider comment syntax to bypass password validation",
+        "Look for error messages that reveal database structure"
       ]
     },
     {
       id: "network-recon",
-      title: "Network Reconnaissance / การสำรวจเครือข่าย",
-      description: "ทำการสแกนเครือข่ายเพื่อจับภาพโครงสร้างเป้าหมาย / Perform network scanning to map the target infrastructure",
-      category: "Network Security / ความปลอดภัยเครือข่าย",
+      title: "Network Reconnaissance",
+      description: "Perform network scanning to map the target infrastructure",
+      category: "Network Security",
       difficulty: "Medium",
       points: 300,
       timeLimit: 45,
       completed: false,
       attempts: 0,
       successRate: 45,
-      scenario: "คุณได้รับมอบหมายให้วาดแผนที่โครงสร้างเครือข่ายของบริษัท ใช้เทคนิคการสแกนเพื่อค้นพบโฮสต์ที่ทำงานอยู่ พอร์ตที่เปิด และบริการที่ทำงาน / You've been tasked with mapping the network infrastructure of a company. Use scanning techniques to discover live hosts, open ports, and running services.",
+      scenario: "You've been tasked with mapping the network infrastructure of a company. Use scanning techniques to discover live hosts, open ports, and running services.",
       objectives: [
-        "ค้นพบโฮสต์ที่ทำงานอยู่บนเครือข่าย / Discover live hosts on the network",
-        "ระบุพอร์ตและบริการที่เปิดอยู่ / Identify open ports and services",
-        "กำหนดระบบปฏิบัติการ / Determine operating systems",
-        "วาดแผนที่โครงสร้างเครือข่าย / Map the network topology"
+        "Discover live hosts on the network",
+        "Identify open ports and services",
+        "Determine operating systems",
+        "Map the network topology"
       ],
       hints: [
-        "เริ่มต้นด้วย ping sweep เพื่อหาโฮสต์ที่ทำงาน / Start with a ping sweep to find live hosts",
-        "ใช้การสแกนพอร์ตเพื่อระบุบริการ / Use port scanning to identify services",
-        "พิจารณาเทคนิค OS fingerprinting / Consider OS fingerprinting techniques"
+        "Start with a ping sweep to find live hosts",
+        "Use port scanning to identify services",
+        "Consider OS fingerprinting techniques"
       ]
     },
     {
       id: "cryptographic-analysis",
-      title: "Caesar Cipher Cryptanalysis / การวิเคราะห์รหัส Caesar",
-      description: "ถอดรหัสข้อความที่เข้ารหัสด้วย Caesar cipher / Decrypt a message encrypted with a Caesar cipher",
-      category: "Cryptography / การเข้ารหัส",
+      title: "Caesar Cipher Cryptanalysis",
+      description: "Decrypt a message encrypted with a Caesar cipher",
+      category: "Cryptography",
       difficulty: "Easy",
       points: 150,
       timeLimit: 20,
       completed: false,
       attempts: 0,
       successRate: 78,
-      scenario: "คุณดักจับข้อความที่เข้ารหัสซึ่งดูเหมือนจะใช้ Caesar cipher ถอดรหัสข้อความเพื่อเปิดเผยข้อมูลลับ / You've intercepted an encrypted message that appears to use a Caesar cipher. Decrypt the message to reveal the secret information.",
+      scenario: "You've intercepted an encrypted message that appears to use a Caesar cipher. Decrypt the message to reveal the secret information.",
       objectives: [
-        "วิเคราะห์รูปแบบในข้อความรหัส / Analyze the ciphertext for patterns",
-        "กำหนดค่าการเลื่อน / Determine the shift value",
-        "ถอดรหัสข้อความทั้งหมด / Decrypt the complete message",
-        "แยกแฟล็กออกจากข้อความธรรมดา / Extract the flag from the plaintext"
+        "Analyze the ciphertext for patterns",
+        "Determine the shift value",
+        "Decrypt the complete message",
+        "Extract the flag from the plaintext"
       ],
       hints: [
-        "ลองวิเคราะห์ความถี่ในข้อความรหัส / Try frequency analysis on the ciphertext",
-        "มองหาคำภาษาอังกฤษทั่วไป / Look for common English words",
-        "รูปแบบแฟล็กคือ: CYBER{...} / The flag format is: CYBER{...}"
+        "Try frequency analysis on the ciphertext",
+        "Look for common English words",
+        "The flag format is: CYBER{...}"
       ]
     },
     {
       id: "advanced-xss",
-      title: "Advanced XSS Exploitation / การใช้ประโยชน์ XSS ขั้นสูง",
-      description: "ใช้ประโยชน์จากช่องโหว่ XSS ที่ซับซ้อนเพื่อขโมยเซสชันคุกกี้ / Exploit a complex XSS vulnerability to steal session cookies",
-      category: "Web Security / ความปลอดภัยเว็บ",
+      title: "Advanced XSS Exploitation",
+      description: "Exploit a complex XSS vulnerability to steal session cookies",
+      category: "Web Security",
       difficulty: "Hard",
       points: 500,
       timeLimit: 60,
       completed: false,
       attempts: 0,
       successRate: 23,
-      scenario: "คุณพบช่องโหว่ XSS ในเว็บแอปพลิเคชันที่มีการป้องกัน CSP สร้าง payload ที่หลีกเลี่ยงการป้องกันเหล่านี้และแยกข้อมูลที่สำคัญ / You've found an XSS vulnerability in a web application with CSP protections. Craft a payload that bypasses these protections and extracts sensitive information.",
+      scenario: "You've found an XSS vulnerability in a web application with CSP protections. Craft a payload that bypasses these protections and extracts sensitive information.",
       objectives: [
-        "วิเคราะห์ Content Security Policy / Analyze the Content Security Policy",
-        "หาวิธีหลีกเลี่ยงข้อจำกัดของ CSP / Find a way to bypass CSP restrictions",
-        "สร้าง XSS payload / Craft an XSS payload",
-        "แยกเซสชันคุกกี้หรือข้อมูลที่สำคัญ / Extract session cookies or sensitive data"
+        "Analyze the Content Security Policy",
+        "Find a way to bypass CSP restrictions",
+        "Craft an XSS payload",
+        "Extract session cookies or sensitive data"
       ],
       hints: [
-        "ศึกษา CSP headers อย่างละเอียด / Study the CSP headers carefully",
-        "มองหาแหล่งสคริปต์ที่อนุญาต / Look for allowed script sources",
-        "พิจารณาใช้ JSONP หรือเทคนิคที่คล้ายกัน / Consider using JSONP or similar techniques"
-      ]
-    },
-    {
-      id: "buffer-overflow-basic",
-      title: "Buffer Overflow Challenge / ท้าทาย Buffer Overflow",
-      description: "ใช้ประโยชน์จากช่องโหว่ Buffer Overflow เพื่อยึดครองระบบ / Exploit buffer overflow vulnerabilities to gain system control",
-      category: "Binary Exploitation",
-      difficulty: "Expert",
-      points: 400,
-      timeLimit: 45,
-      completed: false,
-      attempts: 0,
-      successRate: 18,
-      scenario: "คุณพบแอปพลิเคชันที่มีช่องโหว่ Buffer Overflow ในการจัดการข้อมูลป้อนเข้า ใช้เทคนิคการล้นบัฟเฟอร์เพื่อควบคุมการทำงานของโปรแกรม / You've discovered an application with a buffer overflow vulnerability in input handling. Use buffer overflow techniques to control program execution.",
-      objectives: [
-        "วิเคราะห์ขนาดบัฟเฟอร์ที่เสี่ยงภัย / Analyze the vulnerable buffer size",
-        "สร้าง payload ที่ทำให้เกิด overflow / Create a payload that causes overflow", 
-        "เขียนทับ return address / Overwrite the return address",
-        "ได้รับสิทธิ์ Administrator / Achieve administrator access"
-      ],
-      hints: [
-        "บัฟเฟอร์มีขนาด 16 ตัวอักษร ลองใส่ข้อมูลเกินกว่านั้น / Buffer is 16 characters, try inputting more data",
-        "ใช้ตัวอักษร 'A' หลายๆ ตัวเพื่อทดสอบ / Use multiple 'A' characters to test",
-        "ดูการเปลี่ยนแปลงใน memory state / Watch for changes in memory state"
+        "Study the CSP headers carefully",
+        "Look for allowed script sources",
+        "Consider using JSONP or similar techniques"
       ]
     },
     {
       id: "privilege-escalation",
-      title: "Linux Privilege Escalation / การยกระดับสิทธิ์ Linux",
-      description: "ยกระดับสิทธิ์จากผู้ใช้สิทธิ์จำกัดไปเป็น root / Escalate privileges from a low-privileged user to root",
-      category: "System Security / ความปลอดภัยระบบ",
+      title: "Linux Privilege Escalation",
+      description: "Escalate privileges from a low-privileged user to root",
+      category: "System Security",
       difficulty: "Expert",
       points: 750,
       timeLimit: 90,
       completed: false,
       attempts: 0,
       successRate: 15,
-      scenario: "คุณมีการเข้าถึง shell ในฐานะผู้ใช้ที่มีสิทธิ์จำกัดบนระบบ Linux หาและใช้ประโยชน์จากช่องโหว่เพื่อได้สิทธิ์ root / You have shell access as a limited user on a Linux system. Find and exploit a vulnerability to gain root privileges.",
+      scenario: "You have shell access as a limited user on a Linux system. Find and exploit a vulnerability to gain root privileges.",
       objectives: [
-        "สำรวจระบบเพื่อหาช่องโหว่ / Enumerate the system for vulnerabilities",
-        "ระบุเวกเตอร์การยกระดับสิทธิ์ / Identify privilege escalation vectors",
-        "ใช้ประโยชน์จากช่องโหว่ / Exploit the vulnerability",
-        "ได้รับการเข้าถึง root / Achieve root access"
+        "Enumerate the system for vulnerabilities",
+        "Identify privilege escalation vectors",
+        "Exploit the vulnerability",
+        "Achieve root access"
       ],
       hints: [
-        "ตรวจสอบไบนารี SUID / Check for SUID binaries",
-        "มองหาไดเรกทอรีที่สามารถเขียนได้ใน PATH / Look for writable directories in PATH",
-        "ตรวจสอบกระบวนการและบริการที่ทำงานอยู่ / Examine running processes and services"
+        "Check for SUID binaries",
+        "Look for writable directories in PATH",
+        "Examine running processes and services"
       ]
     }
   ];
@@ -462,12 +437,9 @@ const Challenges = () => {
                 {selectedChallenge.id === "cryptographic-analysis" && (
                   <CryptoDemo onFlagFound={handleFlagFound} />
                 )}
-                {selectedChallenge.id === "buffer-overflow-basic" && (
-                  <BufferOverflowDemo onFlagFound={handleFlagFound} />
-                )}
                 
                 {/* Generic answer submission for other challenges */}
-                {!["sql-injection-basic", "advanced-xss", "cryptographic-analysis", "buffer-overflow-basic"].includes(selectedChallenge.id) && (
+                {!["sql-injection-basic", "advanced-xss", "cryptographic-analysis"].includes(selectedChallenge.id) && (
                   <>
                     <div>
                       <h3 className="font-semibold mb-2">Your Answer</h3>
