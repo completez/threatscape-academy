@@ -29,9 +29,9 @@ const Tutorials = () => {
   const tutorials: Tutorial[] = [
     {
       id: "password-security",
-      title: "Password Security Fundamentals",
-      description: "Learn the basics of creating strong passwords and understanding common attack methods",
-      category: "Authentication",
+      title: "Password Security Fundamentals / พื้นฐานความปลอดภัยรหัสผ่าน",
+      description: "เรียนรู้พื้นฐานการสร้างรหัสผ่านที่แข็งแกร่งและทำความเข้าใจวิธีการโจมตีทั่วไป / Learn the basics of creating strong passwords and understanding common attack methods",
+      category: "Authentication / การยืนยันตัวตน",
       difficulty: "Beginner",
       duration: 15,
       progress: 100,
@@ -39,18 +39,18 @@ const Tutorials = () => {
       author: "CyberSec Team",
       completed: true,
       steps: [
-        "Understanding password complexity requirements",
-        "Common password attack methods",
-        "Using password managers effectively",
-        "Two-factor authentication setup",
-        "Password policy best practices"
+        "ทำความเข้าใจความต้องการความซับซ้อนของรหัสผ่าน / Understanding password complexity requirements",
+        "วิธีการโจมตีรหัสผ่านทั่วไป / Common password attack methods",
+        "ใช้ตัวจัดการรหัสผ่านอย่างมีประสิทธิภาพ / Using password managers effectively",
+        "การตั้งค่าการยืนยันตัวตนสองปัจจัย / Two-factor authentication setup",
+        "แนวทางปฏิบัติที่ดีที่สุดสำหรับนโยบายรหัสผ่าน / Password policy best practices"
       ]
     },
     {
       id: "phishing-awareness",
-      title: "Identifying Phishing Attacks",
-      description: "Learn to recognize and defend against phishing attempts and social engineering",
-      category: "Social Engineering",
+      title: "Identifying Phishing Attacks / การระบุการโจมตี Phishing",
+      description: "เรียนรู้การจดจำและป้องกันการพยายาม phishing และ social engineering / Learn to recognize and defend against phishing attempts and social engineering",
+      category: "Social Engineering / วิศวกรรมสังคม",
       difficulty: "Beginner",
       duration: 20,
       progress: 60,
@@ -58,18 +58,18 @@ const Tutorials = () => {
       author: "Security Expert",
       completed: false,
       steps: [
-        "Types of phishing attacks",
-        "Email analysis techniques",
-        "URL inspection methods",
-        "Reporting phishing attempts",
-        "Creating awareness programs"
+        "ประเภทของการโจมตี phishing / Types of phishing attacks",
+        "เทคนิคการวิเคราะห์อีเมล / Email analysis techniques",
+        "วิธีการตรวจสอบ URL / URL inspection methods",
+        "การรายงานความพยายาม phishing / Reporting phishing attempts",
+        "การสร้างโปรแกรมความตระหนัก / Creating awareness programs"
       ]
     },
     {
       id: "web-vulnerabilities",
-      title: "Common Web Vulnerabilities",
-      description: "Explore OWASP Top 10 vulnerabilities and how to identify them",
-      category: "Web Security",
+      title: "Common Web Vulnerabilities / ช่องโหว่เว็บทั่วไป",
+      description: "สำรวจช่องโหว่ OWASP Top 10 และวิธีการระบุพวกมัน / Explore OWASP Top 10 vulnerabilities and how to identify them",
+      category: "Web Security / ความปลอดภัยเว็บ",
       difficulty: "Intermediate",
       duration: 45,
       progress: 25,
@@ -77,19 +77,19 @@ const Tutorials = () => {
       author: "Web Security Pro",
       completed: false,
       steps: [
-        "SQL Injection fundamentals",
+        "พื้นฐาน SQL Injection / SQL Injection fundamentals",
         "Cross-Site Scripting (XSS)",
         "Cross-Site Request Forgery (CSRF)",
-        "Security misconfigurations",
-        "Broken authentication",
-        "Sensitive data exposure"
+        "การกำหนดค่าความปลอดภัยที่ผิดพลาด / Security misconfigurations",
+        "การยืนยันตัวตนที่เสียหาย / Broken authentication",
+        "การเปิดเผยข้อมูลที่สำคัญ / Sensitive data exposure"
       ]
     },
     {
       id: "network-security",
-      title: "Network Security Basics",
-      description: "Understanding network protocols, firewalls, and intrusion detection",
-      category: "Network Security",
+      title: "Network Security Basics / พื้นฐานความปลอดภัยเครือข่าย",
+      description: "ทำความเข้าใจโปรโตคอลเครือข่าย ไฟร์วอลล์ และการตรวจจับการบุกรุก / Understanding network protocols, firewalls, and intrusion detection",
+      category: "Network Security / ความปลอดภัยเครือข่าย",
       difficulty: "Intermediate",
       duration: 35,
       progress: 0,
@@ -97,18 +97,18 @@ const Tutorials = () => {
       author: "Network Admin",
       completed: false,
       steps: [
-        "Network protocol fundamentals",
-        "Firewall configuration",
-        "VPN setup and management",
-        "Intrusion detection systems",
-        "Network monitoring tools"
+        "พื้นฐานโปรโตคอลเครือข่าย / Network protocol fundamentals",
+        "การกำหนดค่าไฟร์วอลล์ / Firewall configuration",
+        "การตั้งค่าและการจัดการ VPN / VPN setup and management",
+        "ระบบตรวจจับการบุกรุก / Intrusion detection systems",
+        "เครื่องมือการตรวจสอบเครือข่าย / Network monitoring tools"
       ]
     },
     {
       id: "crypto-implementation",
-      title: "Cryptography Implementation",
-      description: "Advanced cryptographic concepts and secure implementation practices",
-      category: "Cryptography",
+      title: "Cryptography Implementation / การใช้งานการเข้ารหัส",
+      description: "แนวคิดการเข้ารหัสขั้นสูงและการปฏิบัติการใช้งานที่ปลอดภัย / Advanced cryptographic concepts and secure implementation practices",
+      category: "Cryptography / การเข้ารหัส",
       difficulty: "Expert",
       duration: 60,
       progress: 0,
@@ -116,19 +116,19 @@ const Tutorials = () => {
       author: "Crypto Specialist",
       completed: false,
       steps: [
-        "Symmetric vs asymmetric encryption",
-        "Key management best practices",
-        "Digital signatures and certificates",
-        "Hash functions and integrity",
-        "Perfect forward secrecy",
-        "Post-quantum cryptography"
+        "การเข้ารหัสแบบสมมาตรเทียบกับแบบไม่สมมาตร / Symmetric vs asymmetric encryption",
+        "แนวทางปฏิบัติที่ดีที่สุดในการจัดการคีย์ / Key management best practices",
+        "ลายเซ็นดิจิทัลและใบรับรอง / Digital signatures and certificates",
+        "ฟังก์ชัน hash และความสมบูรณ์ / Hash functions and integrity",
+        "ความลับส่งต่อที่สมบูรณ์แบบ / Perfect forward secrecy",
+        "การเข้ารหัสหลังยุคควอนตัม / Post-quantum cryptography"
       ]
     },
     {
       id: "incident-response",
-      title: "Incident Response Planning",
-      description: "Learn how to prepare for and respond to cybersecurity incidents",
-      category: "Incident Response",
+      title: "Incident Response Planning / การวางแผนการตอบสนองเหตุการณ์",
+      description: "เรียนรู้วิธีการเตรียมพร้อมและตอบสนองต่อเหตุการณ์ด้านความปลอดภัยไซเบอร์ / Learn how to prepare for and respond to cybersecurity incidents",
+      category: "Incident Response / การตอบสนองเหตุการณ์",
       difficulty: "Advanced",
       duration: 40,
       progress: 0,
@@ -136,11 +136,11 @@ const Tutorials = () => {
       author: "IR Team Lead",
       completed: false,
       steps: [
-        "Incident classification",
-        "Response team organization",
-        "Evidence collection procedures",
-        "Communication protocols",
-        "Recovery and lessons learned"
+        "การจำแนกเหตุการณ์ / Incident classification",
+        "การจัดองค์กรทีมตอบสนอง / Response team organization",
+        "ขั้นตอนการรวบรวมหลักฐาน / Evidence collection procedures",
+        "โปรโตคอลการสื่อสาร / Communication protocols",
+        "การฟื้นฟูและบทเรียนที่ได้เรียนรู้ / Recovery and lessons learned"
       ]
     }
   ];
