@@ -12,6 +12,9 @@ import MitmAttackSimulator from "@/components/MitmAttackSimulator";
 import DosSimulator from "@/components/DosSimulator";
 import XssPlayground from "@/components/XssPlayground";
 import CryptographyAttacks from "@/components/CryptographyAttacks";
+import Tutorials from "@/components/Tutorials";
+import Challenges from "@/components/Challenges";
+import Reports from "@/components/Reports";
 
 const tools = [
   {
@@ -90,6 +93,7 @@ const tools = [
 
 const Index = () => {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [selectedPage, setSelectedPage] = useState<string | null>(null);
   const [completedLabs, setCompletedLabs] = useState<string[]>([]);
 
   const getDifficultyColor = (difficulty: string) => {
@@ -135,23 +139,37 @@ const Index = () => {
     }
   };
 
-  if (selectedTool) {
+  if (selectedTool || selectedPage) {
+    const isPage = selectedPage !== null;
+    const title = isPage 
+      ? (selectedPage === 'tutorials' ? 'Tutorials' : 
+         selectedPage === 'challenges' ? 'Challenges' : 'Reports')
+      : tools.find(t => t.id === selectedTool)?.title;
     return (
       <div className="min-h-screen bg-background p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-4 mb-6">
             <Button 
               variant="outline" 
-              onClick={() => setSelectedTool(null)}
+              onClick={() => {
+                setSelectedTool(null);
+                setSelectedPage(null);
+              }}
               className="cyber-glow"
             >
               ← Back to Dashboard
             </Button>
             <h1 className="text-3xl font-bold text-cyber">
-              {tools.find(t => t.id === selectedTool)?.title}
+              {title}
             </h1>
           </div>
-          {renderToolContent()}
+          {isPage ? (
+            selectedPage === 'tutorials' ? <Tutorials /> :
+            selectedPage === 'challenges' ? <Challenges /> :
+            <Reports />
+          ) : (
+            renderToolContent()
+          )}
         </div>
       </div>
     );
@@ -259,7 +277,12 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Step-by-step guides for each security concept
                 </p>
-                <Button variant="outline" size="sm" className="w-full">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => setSelectedPage('tutorials')}
+                >
                   Browse Tutorials
                 </Button>
               </CardContent>
@@ -273,7 +296,12 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Test your skills with real-world scenarios
                 </p>
-                <Button variant="outline" size="sm" className="w-full">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => setSelectedPage('challenges')}
+                >
                   View Challenges
                 </Button>
               </CardContent>
@@ -287,7 +315,12 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Track your progress and achievements
                 </p>
-                <Button variant="outline" size="sm" className="w-full">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => setSelectedPage('reports')}
+                >
                   View Reports
                 </Button>
               </CardContent>
