@@ -12,7 +12,7 @@ import MitmAttackSimulator from "@/components/MitmAttackSimulator";
 import DosSimulator from "@/components/DosSimulator";
 import XssPlayground from "@/components/XssPlayground";
 import CryptographyAttacks from "@/components/CryptographyAttacks";
-import Tutorials from "@/components/Tutorials";
+import FunctionalTutorials from "@/components/FunctionalTutorials";
 import Challenges from "@/components/Challenges";
 import Reports from "@/components/Reports";
 
@@ -164,7 +164,7 @@ const Index = () => {
             </h1>
           </div>
           {isPage ? (
-            selectedPage === 'tutorials' ? <Tutorials /> :
+            selectedPage === 'tutorials' ? <FunctionalTutorials /> :
             selectedPage === 'challenges' ? <Challenges /> :
             <Reports />
           ) : (

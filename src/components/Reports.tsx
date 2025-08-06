@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,8 @@ import {
   Trophy,
   AlertTriangle
 } from "lucide-react";
+import { supabase, UserActivity, ChallengeAttempt, TutorialProgress } from "@/lib/supabase";
+import { toast } from "@/hooks/use-toast";
 
 interface ActivityData {
   date: string;
@@ -39,6 +41,67 @@ interface SkillProgress {
 const Reports = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("7days");
   const [selectedCategory, setSelectedCategory] = useState("overview");
+  const [userId] = useState(() => `user_${Math.random().toString(36).substr(2, 9)}`);
+  const [activities, setActivities] = useState<UserActivity[]>([]);
+  const [challengeAttempts, setChallengeAttempts] = useState<ChallengeAttempt[]>([]);
+  const [tutorialProgress, setTutorialProgress] = useState<TutorialProgress[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadAllData();
+  }, [selectedPeriod]);
+
+  const loadAllData = async () => {
+    setLoading(true);
+    try {
+      const daysBack = selectedPeriod === "7days" ? 7 : 
+                      selectedPeriod === "30days" ? 30 : 
+                      selectedPeriod === "90days" ? 90 : 365;
+      
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysBack);
+
+      // Load activities
+      const { data: activitiesData, error: activitiesError } = await supabase
+        .from('user_activities')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('created_at', startDate.toISOString());
+
+      if (activitiesError) throw activitiesError;
+
+      // Load challenge attempts
+      const { data: challengesData, error: challengesError } = await supabase
+        .from('challenge_attempts')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('created_at', startDate.toISOString());
+
+      if (challengesError) throw challengesError;
+
+      // Load tutorial progress
+      const { data: tutorialsData, error: tutorialsError } = await supabase
+        .from('tutorial_progress')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('created_at', startDate.toISOString());
+
+      if (tutorialsError) throw tutorialsError;
+
+      setActivities(activitiesData || []);
+      setChallengeAttempts(challengesData || []);
+      setTutorialProgress(tutorialsData || []);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      toast({
+        title: "Error loading data",
+        description: "Failed to load analytics data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const activityData: ActivityData[] = [
     { date: "2024-01-15", toolsUsed: 3, vulnerabilitiesFound: 5, challengesCompleted: 2, timeSpent: 120 },

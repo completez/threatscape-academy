@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Trophy, Target, Clock, Star, Flag, Medal, Award, Zap } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase, ChallengeAttempt } from "@/lib/supabase";
+import SqlInjectionDemo from "./challenges/SqlInjectionDemo";
+import XssDemo from "./challenges/XssDemo";
+import CryptoDemo from "./challenges/CryptoDemo";
 
 interface Challenge {
   id: string;
@@ -31,6 +35,54 @@ const Challenges = () => {
   const [challengeStarted, setChallengeStarted] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [currentHint, setCurrentHint] = useState(0);
+  const [foundFlags, setFoundFlags] = useState<Set<string>>(new Set());
+  const [userId] = useState(() => `user_${Math.random().toString(36).substr(2, 9)}`);
+  const [challengeAttempts, setChallengeAttempts] = useState<ChallengeAttempt[]>([]);
+
+  useEffect(() => {
+    loadChallengeAttempts();
+  }, []);
+
+  const loadChallengeAttempts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('challenge_attempts')
+        .select('*')
+        .eq('user_id', userId);
+      
+      if (error) throw error;
+      setChallengeAttempts(data || []);
+    } catch (error) {
+      console.error('Error loading challenge attempts:', error);
+    }
+  };
+
+  const saveChallengeAttempt = async (challengeId: string, completed: boolean, flag?: string, timeTaken?: number) => {
+    try {
+      const attempt = challengeAttempts.find(a => a.challenge_id === challengeId);
+      const newAttempts = (attempt?.attempts || 0) + 1;
+      
+      const attemptData = {
+        challenge_id: challengeId,
+        user_id: userId,
+        completed,
+        attempts: newAttempts,
+        score: completed ? challenges.find(c => c.id === challengeId)?.points || 0 : 0,
+        time_taken: timeTaken || 0,
+        flag_found: flag,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('challenge_attempts')
+        .upsert(attemptData);
+      
+      if (error) throw error;
+      await loadChallengeAttempts();
+    } catch (error) {
+      console.error('Error saving challenge attempt:', error);
+    }
+  };
 
   const challenges: Challenge[] = [
     {
@@ -180,8 +232,8 @@ const Challenges = () => {
   ];
 
   const categories = Array.from(new Set(challenges.map(c => c.category)));
-  const completedChallenges = challenges.filter(c => c.completed).length;
-  const totalPoints = challenges.filter(c => c.completed).reduce((sum, c) => sum + c.points, 0);
+  const completedChallenges = challengeAttempts.filter(a => a.completed).length;
+  const totalPoints = challengeAttempts.filter(a => a.completed).reduce((sum, a) => sum + a.score, 0);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -222,7 +274,7 @@ const Challenges = () => {
     }, 1000);
   };
 
-  const submitAnswer = () => {
+  const submitAnswer = async () => {
     if (!userAnswer.trim()) {
       toast({
         title: "Error",
@@ -232,23 +284,43 @@ const Challenges = () => {
       return;
     }
 
-    // Simulate answer checking
-    const isCorrect = Math.random() > 0.3; // 70% success rate for demo
+    if (!selectedChallenge) return;
+
+    const timeTaken = (selectedChallenge.timeLimit * 60) - timeRemaining;
     
-    if (isCorrect) {
+    // Check if answer contains a flag format
+    const flagPattern = /CYBER\{[^}]+\}/g;
+    const foundFlag = userAnswer.match(flagPattern)?.[0];
+    
+    if (foundFlag) {
+      await saveChallengeAttempt(selectedChallenge.id, true, foundFlag, timeTaken);
+      setFoundFlags(prev => new Set(prev).add(foundFlag));
+      
       toast({
-        title: "Correct!",
-        description: `Challenge completed! You earned ${selectedChallenge?.points} points`,
+        title: "Flag Found!",
+        description: `Correct flag! You earned ${selectedChallenge.points} points`,
       });
       setChallengeStarted(false);
       setSelectedChallenge(null);
     } else {
+      await saveChallengeAttempt(selectedChallenge.id, false, undefined, timeTaken);
+      
       toast({
         title: "Incorrect",
-        description: "Try again or use a hint",
+        description: "Flag not found. Try again or use a hint",
         variant: "destructive",
       });
     }
+  };
+
+  const handleFlagFound = async (flag: string) => {
+    if (!selectedChallenge) return;
+    
+    const timeTaken = (selectedChallenge.timeLimit * 60) - timeRemaining;
+    await saveChallengeAttempt(selectedChallenge.id, true, flag, timeTaken);
+    setFoundFlags(prev => new Set(prev).add(flag));
+    
+    setChallengeStarted(false);
   };
 
   const useHint = () => {
@@ -335,28 +407,44 @@ const Challenges = () => {
 
             {challengeStarted && (
               <div className="space-y-4 border-t border-border pt-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Your Answer</h3>
-                  <Textarea
-                    value={userAnswer}
-                    onChange={(e) => setUserAnswer(e.target.value)}
-                    placeholder="Enter your solution, flag, or findings..."
-                    className="min-h-[100px]"
-                  />
-                </div>
+                {/* Render specific challenge demo */}
+                {selectedChallenge.id === "sql-injection-basic" && (
+                  <SqlInjectionDemo onFlagFound={handleFlagFound} />
+                )}
+                {selectedChallenge.id === "advanced-xss" && (
+                  <XssDemo onFlagFound={handleFlagFound} />
+                )}
+                {selectedChallenge.id === "cryptographic-analysis" && (
+                  <CryptoDemo onFlagFound={handleFlagFound} />
+                )}
+                
+                {/* Generic answer submission for other challenges */}
+                {!["sql-injection-basic", "advanced-xss", "cryptographic-analysis"].includes(selectedChallenge.id) && (
+                  <>
+                    <div>
+                      <h3 className="font-semibold mb-2">Your Answer</h3>
+                      <Textarea
+                        value={userAnswer}
+                        onChange={(e) => setUserAnswer(e.target.value)}
+                        placeholder="Enter your solution, flag, or findings..."
+                        className="min-h-[100px]"
+                      />
+                    </div>
 
-                <div className="flex gap-2">
-                  <Button onClick={submitAnswer} className="flex-1">
-                    Submit Answer
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={useHint}
-                    disabled={currentHint >= selectedChallenge.hints.length}
-                  >
-                    Use Hint ({currentHint}/{selectedChallenge.hints.length})
-                  </Button>
-                </div>
+                    <div className="flex gap-2">
+                      <Button onClick={submitAnswer} className="flex-1">
+                        Submit Answer
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={useHint}
+                        disabled={currentHint >= selectedChallenge.hints.length}
+                      >
+                        Use Hint ({currentHint}/{selectedChallenge.hints.length})
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
