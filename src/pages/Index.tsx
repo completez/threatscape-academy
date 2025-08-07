@@ -15,6 +15,9 @@ import CryptographyAttacks from "@/components/CryptographyAttacks";
 import FunctionalTutorials from "@/components/FunctionalTutorials";
 import Challenges from "@/components/Challenges";
 import Reports from "@/components/Reports";
+import GameMode from "@/components/GameMode";
+import SkillTree from "@/components/SkillTree";
+import LiveEvents from "@/components/LiveEvents";
 
 const tools = [
   {
@@ -143,7 +146,10 @@ const Index = () => {
     const isPage = selectedPage !== null;
     const title = isPage 
       ? (selectedPage === 'tutorials' ? 'Tutorials' : 
-         selectedPage === 'challenges' ? 'Challenges' : 'Reports')
+         selectedPage === 'challenges' ? 'Challenges' :
+         selectedPage === 'gamemode' ? 'Game Mode' :
+         selectedPage === 'skilltree' ? 'Skill Tree' :
+         selectedPage === 'liveevents' ? 'Live Events' : 'Reports')
       : tools.find(t => t.id === selectedTool)?.title;
     return (
       <div className="min-h-screen bg-background p-6">
@@ -166,6 +172,9 @@ const Index = () => {
           {isPage ? (
             selectedPage === 'tutorials' ? <FunctionalTutorials /> :
             selectedPage === 'challenges' ? <Challenges /> :
+            selectedPage === 'gamemode' ? <GameMode /> :
+            selectedPage === 'skilltree' ? <SkillTree /> :
+            selectedPage === 'liveevents' ? <LiveEvents /> :
             <Reports />
           ) : (
             renderToolContent()
@@ -268,7 +277,7 @@ const Index = () => {
         {/* Learning Resources */}
         <div className="mt-12">
           <h2 className="text-2xl font-bold mb-6">Learning Resources</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <Card className="terminal-effect">
               <CardHeader>
                 <CardTitle className="text-primary">📚 Tutorials</CardTitle>
@@ -322,6 +331,91 @@ const Index = () => {
                   onClick={() => setSelectedPage('reports')}
                 >
                   View Reports
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="terminal-effect">
+              <CardHeader>
+                <CardTitle className="text-warning">🎮 Game Mode</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Compete with others in real-time challenges
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => setSelectedPage('gamemode')}
+                >
+                  Enter Game
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="terminal-effect">
+              <CardHeader>
+                <CardTitle className="text-destructive">🎯 Skill Tree</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Unlock new skills and advance your expertise
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => setSelectedPage('skilltree')}
+                >
+                  View Skills
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Live Events Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold mb-6">Live Events & Community</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="terminal-effect bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/20">
+              <CardHeader>
+                <CardTitle className="text-red-500 flex items-center gap-2">
+                  🔴 Live Events
+                  <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse"></div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Join live workshops, CTF competitions, and webinars
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => setSelectedPage('liveevents')}
+                >
+                  View Live Events
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="terminal-effect">
+              <CardHeader>
+                <CardTitle className="text-primary">💬 Community Hub</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Connect with other cybersecurity professionals
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  disabled
+                >
+                  Coming Soon
                 </Button>
               </CardContent>
             </Card>
