@@ -1,356 +1,478 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, Zap, Shield, TrendingUp, Server, Clock } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { Slider } from "@/components/ui/slider";
+import { useToast } from "@/hooks/use-toast";
+import { Globe, RefreshCcw, Cpu, AlertTriangle, Shield, Info } from "lucide-react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ReferenceLine,
+} from "recharts";
 
-interface AttackStats {
-  requestsSent: number;
-  responseTime: number;
-  successRate: number;
-  serverStatus: "online" | "degraded" | "offline";
-}
+/**
+ * Beginner-Friendly Rate Limit Demo (SAFE)
+ * ---------------------------------------
+ * - No real network requests are made (local simulation only)
+ * - Beginner Mode (default) shows only two lines: "Accepted" and "Blocked (429)"
+ * - Three presets to quickly demonstrate common scenarios
+ */
 
-const DosSimulator = () => {
+type AttackType = "TCP" | "UDP" | "HTTP"; // UI label only
+type LimiterType = "Token Bucket" | "Leaky Bucket" | "Fixed Window" | "Sliding Window";
+
+type Point = {
+  t: number; // seconds since start
+  sent: number; // how many requests we attempted in this tick
+  success: number; // accepted (2xx)
+  throttled: number; // rejected (429)
+  remaining: number; // remaining tokens/quota
+};
+
+const MAX_POINTS = 120;
+
+export default function BeginnerRateLimitDemo() {
+  // ====== Beginner mode toggle ======
+  const [beginnerMode, setBeginnerMode] = useState(true);
+
+  // ====== Flood settings (SAFE) ======
   const [isAttacking, setIsAttacking] = useState(false);
-  const [targetUrl, setTargetUrl] = useState("https://demo-server.local");
-  const [attackType, setAttackType] = useState("http-flood");
-  const [intensity, setIntensity] = useState("medium");
+  const [attackType, setAttackType] = useState<AttackType>("HTTP");
+  const [intensity, setIntensity] = useState(40); // target req/s
   const [progress, setProgress] = useState(0);
-  const [attackStats, setAttackStats] = useState<AttackStats>({
-    requestsSent: 0,
-    responseTime: 50,
-    successRate: 100,
-    serverStatus: "online"
-  });
 
-  const attackTypes = [
-    { value: "http-flood", label: "HTTP Flood" },
-    { value: "syn-flood", label: "SYN Flood" },
-    { value: "udp-flood", label: "UDP Flood" },
-    { value: "ping-flood", label: "Ping Flood" },
-    { value: "slowloris", label: "Slowloris" }
-  ];
+  // ====== Rate limiter params ======
+  const [limiter, setLimiter] = useState<LimiterType>("Token Bucket");
+  const [capacity, setCapacity] = useState(100); // max quota
+  const [refillRps, setRefillRps] = useState(20); // tokens/sec (or drain rate for leaky bucket)
+  const [windowSec, setWindowSec] = useState(1);
 
-  const intensityLevels = [
-    { value: "low", label: "Low (100 req/s)", color: "primary" },
-    { value: "medium", label: "Medium (500 req/s)", color: "warning" },
-    { value: "high", label: "High (1000 req/s)", color: "destructive" },
-    { value: "extreme", label: "Extreme (5000 req/s)", color: "destructive" }
-  ];
+  // target (display only; no real requests)
+  const [targetUrl, setTargetUrl] = useState("https://demo.local/api");
 
-  const startDosAttack = () => {
-    setIsAttacking(true);
-    setProgress(0);
-    setAttackStats({
-      requestsSent: 0,
-      responseTime: 50,
-      successRate: 100,
-      serverStatus: "online"
-    });
+  // ====== Metrics ======
+  const [requestsSent, setRequestsSent] = useState(0);
+  const [series, setSeries] = useState<Point[]>([]);
+  const startTsRef = useRef<number | null>(null);
 
-    toast({
-      title: "DoS Attack Started",
-      description: `Launching ${attackType} attack at ${intensity} intensity`,
-    });
+  // ====== Internal limiter state ======
+  const tokensRef = useRef<number>(capacity); // token bucket
+  const leakQueueRef = useRef<number>(0); // leaky bucket queue size
+  const windowCountRef = useRef<number>(0); // fixed window count within current window
+  const slidingEventsRef = useRef<number[]>([]); // timestamps (ms) of accepted requests for sliding window
+  const lastTickRef = useRef<number>(0); // window tick id for fixed window
 
-    // Simulate attack progression
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        const newProgress = prev + 2;
-        
-        // Update attack stats based on progress
-        setAttackStats(prevStats => ({
-          requestsSent: Math.floor((newProgress / 100) * 10000),
-          responseTime: Math.min(50 + (newProgress * 20), 5000),
-          successRate: Math.max(100 - (newProgress * 0.8), 0),
-          serverStatus: newProgress < 30 ? "online" : 
-                       newProgress < 70 ? "degraded" : "offline"
-        }));
+  // Reset internals when params change
+  useEffect(() => {
+    tokensRef.current = capacity;
+    leakQueueRef.current = 0;
+    windowCountRef.current = 0;
+    slidingEventsRef.current = [];
+  }, [capacity, refillRps, windowSec, limiter]);
 
-        if (newProgress >= 100) {
-          clearInterval(interval);
-          setIsAttacking(false);
-          toast({
-            title: "Attack Completed",
-            description: "Target server is unresponsive",
-            variant: "destructive",
-          });
-          return 100;
-        }
-        return newProgress;
+  // ====== Simulation loop ======
+  useEffect(() => {
+    let raf: number;
+    let last = performance.now();
+
+    const loop = (now: number) => {
+      const dtMs = now - last;
+      last = now;
+
+      if (!startTsRef.current) startTsRef.current = now;
+      const tSec = Number(((now - startTsRef.current) / 1000).toFixed(1));
+
+      if (isAttacking) {
+        setProgress((p) => Math.min(100, p + dtMs / 100));
+      }
+
+      const dt = dtMs / 1000;
+      const targetSends = isAttacking ? Math.max(0, Math.round(intensity * dt)) : 0;
+
+      const { accepted, rejected, remaining } = simulateLimiterTick({
+        limiter,
+        sends: targetSends,
+        dt,
+        now,
+        capacity,
+        refillRps,
+        windowSec,
+        refs: { tokensRef, leakQueueRef, windowCountRef, slidingEventsRef, lastTickRef },
       });
-    }, 100);
-  };
 
-  const stopAttack = () => {
-    setIsAttacking(false);
-    setProgress(0);
-    setAttackStats({
-      requestsSent: 0,
-      responseTime: 50,
-      successRate: 100,
-      serverStatus: "online"
-    });
-    
-    toast({
-      title: "Attack Stopped",
-      description: "DoS attack has been terminated",
-    });
-  };
+      if (targetSends > 0) {
+        setRequestsSent((n) => n + accepted + rejected);
+        setSeries((arr) => {
+          const next: Point = { t: tSec, sent: targetSends, success: accepted, throttled: rejected, remaining };
+          const trimmed = [...arr, next];
+          if (trimmed.length > MAX_POINTS) trimmed.shift();
+          return trimmed;
+        });
+      }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "online": return "text-primary";
-      case "degraded": return "text-warning";
-      case "offline": return "text-destructive";
-      default: return "text-muted-foreground";
+      raf = requestAnimationFrame(loop);
+    };
+
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [isAttacking, intensity, limiter, capacity, refillRps, windowSec]);
+
+  // Toast when throttling happens (helps beginners notice)
+  const { toast } = useToast();
+  const lastThrottledRef = useRef(0);
+  useEffect(() => {
+    const last = series[series.length - 1];
+    if (last && last.throttled > 0 && performance.now() - lastThrottledRef.current > 1500) {
+      lastThrottledRef.current = performance.now();
+      toast({
+        title: "429 Too Many Requests",
+        description: `${last.throttled} requests were blocked in the last tick`,
+        variant: "destructive",
+      });
     }
+  }, [series, toast]);
+
+  // Controls
+  const start = () => {
+    setProgress(0);
+    setRequestsSent(0);
+    setSeries([]);
+    startTsRef.current = null;
+    setIsAttacking(true);
   };
+  const stop = () => setIsAttacking(false);
+
+  // Beginner-friendly presets
+  function applyPreset(name: "Low traffic" | "Bursty" | "Over limit") {
+    if (name === "Low traffic") {
+      setBeginnerMode(true);
+      setLimiter("Token Bucket");
+      setCapacity(60);
+      setRefillRps(20);
+      setWindowSec(1);
+      setIntensity(10);
+    } else if (name === "Bursty") {
+      setBeginnerMode(true);
+      setLimiter("Token Bucket");
+      setCapacity(40);
+      setRefillRps(10);
+      setWindowSec(1);
+      setIntensity(80);
+    } else if (name === "Over limit") {
+      setBeginnerMode(true);
+      setLimiter("Fixed Window");
+      setCapacity(20);
+      setWindowSec(1);
+      setRefillRps(0);
+      setIntensity(120);
+    }
+  }
+
+  // Human-friendly status text
+  const lastPoint = series[series.length - 1];
+  const status = useMemo(() => {
+    if (!lastPoint) return { emoji: "🟢", title: "Not started yet", desc: "Press Start to see the demo" };
+    if (lastPoint.throttled > 0 && lastPoint.success === 0) return { emoji: "🔴", title: "Almost fully blocked", desc: "Quota exceeded; all requests blocked (429)" };
+    if (lastPoint.throttled > 0) return { emoji: "🟠", title: "Being rate-limited", desc: "Some requests are rejected (429) because sending too fast" };
+    return { emoji: "🟢", title: "All good", desc: "All requests are accepted" };
+  }, [lastPoint]);
 
   return (
     <div className="space-y-6">
-      <Card className="terminal-effect">
+      {/* Intro / How it works */}
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-cyber">
-            <Zap className="h-6 w-6" />
-            Denial of Service (DoS) Simulator
+          <CardTitle className="flex items-center gap-2">
+            <Info className="h-5 w-5" />
+            How to read the graph (Beginner)
           </CardTitle>
-          <CardDescription>
-            Understand DoS attacks and learn about mitigation strategies
-          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Alert className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              This simulator uses mock targets only. Never attack real servers or networks.
-            </AlertDescription>
-          </Alert>
+        <CardContent className="text-sm text-muted-foreground space-y-2">
+          <p>1) We send requests at a chosen rate (Intensity).</p>
+          <p>2) The Rate Limiter checks whether you exceed quota.</p>
+          <p>3) If exceeded → some requests return <code>429 Too Many Requests</code>.</p>
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="simulator" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="simulator">Attack Simulator</TabsTrigger>
-          <TabsTrigger value="mitigation">Mitigation</TabsTrigger>
-          <TabsTrigger value="education">Learn More</TabsTrigger>
-        </TabsList>
+      {/* Main Simulator Card */}
+      <Card className="terminal-effect">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
+            Flood (SAFE) + Rate Limit Visualizer — Beginner Mode
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Left controls */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2">Beginner Mode</Label>
+                <Button variant="outline" size="sm" onClick={() => setBeginnerMode((v) => !v)}>
+                  {beginnerMode ? "ON" : "OFF"}
+                </Button>
+              </div>
 
-        <TabsContent value="simulator" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="terminal-effect">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Server className="h-5 w-5" />
-                  Attack Configuration
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="target">Target Server</Label>
-                  <Input
-                    id="target"
-                    value={targetUrl}
-                    onChange={(e) => setTargetUrl(e.target.value)}
-                    placeholder="https://demo-server.local"
-                    disabled={isAttacking}
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="secondary" onClick={() => applyPreset("Low traffic")}>Low traffic</Button>
+                <Button size="sm" variant="secondary" onClick={() => applyPreset("Bursty")}>Bursty</Button>
+                <Button size="sm" variant="secondary" onClick={() => applyPreset("Over limit")}>Over limit</Button>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Demo Target (display only)</Label>
+                <Input value={targetUrl} onChange={(e) => setTargetUrl(e.target.value)} />
+                <p className="text-xs text-muted-foreground flex items-center gap-2">
+                  <Shield className="h-4 w-4" /> Safe mode: no real requests are sent
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Flood Type</Label>
+                <select
+                  className="w-full p-2 border rounded-md bg-background"
+                  value={attackType}
+                  onChange={(e) => setAttackType(e.target.value as AttackType)}
+                >
+                  <option value="TCP">TCP Flood</option>
+                  <option value="UDP">UDP Flood</option>
+                  <option value="HTTP">HTTP Flood</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Intensity: {intensity} req/s</Label>
+                <Slider value={[intensity]} onValueChange={(v) => setIntensity(v[0])} min={1} max={200} step={1} />
+              </div>
+
+              <div className="flex gap-3">
+                <Button onClick={start} disabled={isAttacking} className="w-1/2 bg-red-600 hover:bg-red-700">
+                  {isAttacking ? <RefreshCcw className="h-4 w-4 mr-2 animate-spin" /> : <Globe className="h-4 w-4 mr-2" />}
+                  Start
+                </Button>
+                <Button onClick={stop} disabled={!isAttacking} className="w-1/2 bg-green-600 hover:bg-green-700">
+                  <RefreshCcw className="h-4 w-4 mr-2" /> Stop
+                </Button>
+              </div>
+
+              <div className="rounded-xl border p-3 bg-black/10">
+                <div className="text-sm font-medium">Progress</div>
+                <div className="w-full h-3 rounded bg-black/20 mt-2 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-red-500 to-yellow-500"
+                    style={{ width: `${progress}%`, transition: "width .1s linear" }}
                   />
                 </div>
+                <div className="mt-2 text-xs text-muted-foreground">{progress.toFixed(0)}%</div>
+              </div>
+            </div>
 
-                <div className="space-y-2">
-                  <Label>Attack Type</Label>
-                  <Select value={attackType} onValueChange={setAttackType} disabled={isAttacking}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {attackTypes.map(type => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            {/* Right: rate limiter params */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Rate Limiter Type</Label>
+                <select
+                  className="w-full p-2 border rounded-md bg-background"
+                  value={limiter}
+                  onChange={(e) => setLimiter(e.target.value as LimiterType)}
+                >
+                  <option>Token Bucket</option>
+                  <option>Leaky Bucket</option>
+                  <option>Fixed Window</option>
+                  <option>Sliding Window</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label>Capacity (max quota)</Label>
+                  <Input
+                    type="number"
+                    value={capacity}
+                    onChange={(e) => setCapacity(Math.max(1, Number(e.target.value)))}
+                  />
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Attack Intensity</Label>
-                  <Select value={intensity} onValueChange={setIntensity} disabled={isAttacking}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {intensityLevels.map(level => (
-                        <SelectItem key={level.value} value={level.value}>
-                          {level.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-1">
+                  <Label>Refill rate (req/s)</Label>
+                  <Input
+                    type="number"
+                    value={refillRps}
+                    onChange={(e) => setRefillRps(Math.max(0, Number(e.target.value)))}
+                  />
                 </div>
-
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={startDosAttack} 
-                    disabled={isAttacking}
-                    variant="destructive"
-                    className="flex-1"
-                  >
-                    {isAttacking ? "Attacking..." : "Start DoS Attack"}
-                  </Button>
-                  {isAttacking && (
-                    <Button onClick={stopAttack} variant="outline">
-                      Stop
-                    </Button>
-                  )}
+                <div className="space-y-1">
+                  <Label>Window size (s)</Label>
+                  <Input
+                    type="number"
+                    value={windowSec}
+                    onChange={(e) => setWindowSec(Math.max(0.1, Number(e.target.value)))}
+                  />
                 </div>
+              </div>
 
-                {isAttacking && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Attack Progress</span>
-                      <span>{progress.toFixed(0)}%</span>
-                    </div>
-                    <Progress value={progress} className="h-2" />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              <div className="text-sm text-muted-foreground">
+                Total requests attempted: <span className="font-semibold">{requestsSent}</span>
+              </div>
 
-            <Card className="terminal-effect">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Real-time Statistics
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <div className="text-2xl font-bold text-primary">
-                      {attackStats.requestsSent.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Requests Sent</div>
-                  </div>
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <div className="text-2xl font-bold text-warning">
-                      {attackStats.responseTime}ms
-                    </div>
-                    <div className="text-xs text-muted-foreground">Response Time</div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Success Rate:</span>
-                    <Badge variant={attackStats.successRate > 80 ? "secondary" : "destructive"}>
-                      {attackStats.successRate.toFixed(1)}%
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Server Status:</span>
-                    <span className={`text-sm font-medium capitalize ${getStatusColor(attackStats.serverStatus)}`}>
-                      {attackStats.serverStatus}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-border">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    Attack Duration: {((progress / 100) * 50).toFixed(0)}s
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <ol className="text-sm bg-black/5 rounded-lg p-3 space-y-1">
+                <li>1) We send requests at the chosen intensity</li>
+                <li>2) The limiter checks if quota is exceeded</li>
+                <li>3) If exceeded → some requests return <code>429 Too Many Requests</code></li>
+              </ol>
+            </div>
           </div>
-        </TabsContent>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="mitigation" className="space-y-4">
-          <Card className="terminal-effect">
-            <CardHeader>
-              <CardTitle>DoS Attack Mitigation Strategies</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Shield className="h-5 w-5 text-primary mt-0.5" />
-                  <div>
-                    <h4 className="font-medium">Rate Limiting</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Limit the number of requests from a single IP address within a time window
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Server className="h-5 w-5 text-primary mt-0.5" />
-                  <div>
-                    <h4 className="font-medium">Load Balancing</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Distribute traffic across multiple servers to handle increased load
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Zap className="h-5 w-5 text-primary mt-0.5" />
-                  <div>
-                    <h4 className="font-medium">DDoS Protection Services</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Use cloud-based DDoS protection like Cloudflare or AWS Shield
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+      {/* Chart */}
+      <Card className="terminal-effect">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Cpu className="h-5 w-5 text-secondary" />
+            Rate Limit Impact (Easy to read)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[320px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={series} margin={{ top: 10, right: 16, bottom: 0, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="t" tickFormatter={(v) => `${v}s`} />
+                <YAxis yAxisId="left" />
+                <YAxis yAxisId="right" orientation="right" />
+                <Tooltip formatter={(value: number, name: string) => [value, name]} labelFormatter={(l) => `${l}s`} />
+                <Legend />
+                <ReferenceLine y={0} yAxisId="left" strokeDasharray="3 3" />
+                {beginnerMode ? (
+                  <>
+                    <Line yAxisId="left" type="monotone" dataKey="success"   name="Accepted"          dot={false} strokeWidth={3} />
+                    <Line yAxisId="left" type="monotone" dataKey="throttled" name="Blocked (429)"     dot={false} strokeWidth={3} />
+                  </>
+                ) : (
+                  <>
+                    <Line yAxisId="left"  type="monotone" dataKey="sent"      name="Sent (all attempts)"     dot={false} strokeWidth={2} />
+                    <Line yAxisId="left"  type="monotone" dataKey="success"   name="Accepted (successful)"   dot={false} strokeWidth={2} />
+                    <Line yAxisId="left"  type="monotone" dataKey="throttled" name="Throttled (429 errors)"  dot={false} strokeWidth={2} />
+                    <Line yAxisId="right" type="monotone" dataKey="remaining" name="Remaining tokens/quota"  dot={false} strokeWidth={2} />
+                  </>
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
 
-        <TabsContent value="education" className="space-y-4">
-          <Card className="terminal-effect">
-            <CardHeader>
-              <CardTitle>Understanding DoS Attacks</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-2">What is a DoS Attack?</h4>
-                  <p className="text-sm text-muted-foreground">
-                    A Denial of Service attack aims to make a service unavailable by overwhelming 
-                    it with traffic or exploiting vulnerabilities to consume system resources.
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Types of DoS Attacks:</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• <strong>HTTP Flood:</strong> Overwhelm web servers with HTTP requests</li>
-                    <li>• <strong>SYN Flood:</strong> Exploit TCP handshake process</li>
-                    <li>• <strong>UDP Flood:</strong> Send large numbers of UDP packets</li>
-                    <li>• <strong>Slowloris:</strong> Keep connections open to exhaust server resources</li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">DDoS vs DoS:</h4>
-                  <p className="text-sm text-muted-foreground">
-                    DDoS (Distributed Denial of Service) uses multiple compromised systems 
-                    (botnet) to launch coordinated attacks, making them much harder to defend against.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          {/* Narration */}
+          <div className="mt-4 rounded-xl border p-3 flex items-center gap-3">
+            <div className="text-2xl">{status.emoji}</div>
+            <div>
+              <div className="font-semibold">{status.title}</div>
+              <div className="text-sm text-muted-foreground">{status.desc}</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Warning */}
+      <Card className="border-warning bg-warning/10">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 text-warning">
+            <AlertTriangle className="h-5 w-5" />
+            <span className="font-semibold">Educational Purpose Only</span>
+          </div>
+          <p className="text-sm mt-2 text-muted-foreground">
+            This tool simulates flooding and rate limiting locally. Do not send traffic to systems you do not own or do not have explicit permission to test.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
-};
+}
 
-export default DosSimulator;
+// ===== Limiter engine =====
+function simulateLimiterTick({
+  limiter,
+  sends,
+  dt,
+  now,
+  capacity,
+  refillRps,
+  windowSec,
+  refs,
+}: {
+  limiter: LimiterType;
+  sends: number;
+  dt: number;
+  now: number;
+  capacity: number;
+  refillRps: number;
+  windowSec: number;
+  refs: {
+    tokensRef: React.MutableRefObject<number>;
+    leakQueueRef: React.MutableRefObject<number>;
+    windowCountRef: React.MutableRefObject<number>;
+    slidingEventsRef: React.MutableRefObject<number[]>;
+    lastTickRef: React.MutableRefObject<number>;
+  };
+}): { accepted: number; rejected: number; remaining: number } {
+  const { tokensRef, leakQueueRef, windowCountRef, slidingEventsRef, lastTickRef } = refs;
+  switch (limiter) {
+    case "Token Bucket": {
+      // Refill tokens
+      tokensRef.current = Math.min(capacity, tokensRef.current + refillRps * dt);
+      let accepted = 0;
+      let rejected = 0;
+      for (let i = 0; i < sends; i++) {
+        if (tokensRef.current >= 1) {
+          tokensRef.current -= 1;
+          accepted++;
+        } else {
+          rejected++;
+        }
+      }
+      return { accepted, rejected, remaining: Math.max(0, Math.floor(tokensRef.current)) };
+    }
+    case "Leaky Bucket": {
+      // Enqueue and drain at constant rate
+      leakQueueRef.current += sends;
+      const canDrain = Math.min(leakQueueRef.current, Math.floor(refillRps * dt));
+      const overflow = Math.max(0, leakQueueRef.current - canDrain - capacity);
+      const accepted = canDrain;
+      const rejected = overflow;
+      leakQueueRef.current = Math.max(0, leakQueueRef.current - accepted - rejected);
+      const remaining = Math.max(0, capacity - leakQueueRef.current);
+      return { accepted, rejected, remaining };
+    }
+    case "Fixed Window": {
+      // Reset every windowSec seconds
+      const tick = Math.floor(now / (windowSec * 1000));
+      if (tick !== lastTickRef.current) {
+        lastTickRef.current = tick;
+        windowCountRef.current = 0;
+      }
+      const remaining = Math.max(0, capacity - windowCountRef.current);
+      const accepted = Math.min(remaining, sends);
+      const rejected = Math.max(0, sends - accepted);
+      windowCountRef.current += accepted;
+      return { accepted, rejected, remaining: Math.max(0, capacity - windowCountRef.current) };
+    }
+    case "Sliding Window": {
+      const windowMs = windowSec * 1000;
+      const cutoff = now - windowMs;
+      slidingEventsRef.current = slidingEventsRef.current.filter((ts) => ts >= cutoff);
+      const remaining = Math.max(0, capacity - slidingEventsRef.current.length);
+      const accepted = Math.min(remaining, sends);
+      const rejected = Math.max(0, sends - accepted);
+      for (let i = 0; i < accepted; i++) {
+        slidingEventsRef.current.push(now);
+      }
+      return { accepted, rejected, remaining: Math.max(0, capacity - slidingEventsRef.current.length) };
+    }
+  }
+}
