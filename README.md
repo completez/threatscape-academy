@@ -78,5 +78,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ---
 
 <div align="center">
-  Made with ❤️ by <a href="https://github.com/username">Your Name</a>
+  Made with ❤️ by <a href="https://github.com/completez">Your Name</a>
 </div>
