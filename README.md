@@ -1,72 +1,82 @@
-# Welcome to your Lovable project
+<div align="center">
+  <img src="https://img.shields.io/badge/ThreatScape%20Academy-v1.0-blueviolet?style=for-the-badge&logo=github" alt="badge"/>
+  <h1>⚡ ThreatScape Academy ⚡</h1>
+  <p><i>แพลตฟอร์มเว็บสำหรับการเรียนรู้ด้าน Cybersecurity ด้วย Vite + Tailwind + TypeScript</i></p>
+</div>
 
-## Project info
+---
 
-**URL**: https://lovable.dev/projects/d9c7d8a0-54a5-43bd-a04d-db06248cea54
+## ✨ Features
+- 🛡️ อินเทอร์เฟซที่สวยงาม ใช้ **TailwindCSS**
+- ⚡ เร็วแรงด้วย **Vite**
+- 🟦 เขียนด้วย **TypeScript**
+- 📱 รองรับ Responsive Design
+- 🚀 พร้อมสำหรับการ Deploy
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+## 📂 Project Structure
+```
+threatscape-academy-main/
+├── index.html          # Entry HTML
+├── src/                # Source code (React/TS)
+├── components.json     # Component config
+├── tailwind.config.ts  # TailwindCSS config
+├── vite.config.ts      # Vite build config
+├── tsconfig.json       # TypeScript config
+├── package.json        # Dependencies & Scripts
+└── README.md           # เอกสารโปรเจกต์
 ```
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## ⚙️ Installation & Usage
 
-**Use GitHub Codespaces**
+```bash
+# 1. Clone repository
+git clone https://github.com/username/threatscape-academy.git
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# 2. เข้าโฟลเดอร์โปรเจกต์
+cd threatscape-academy-main
 
-## What technologies are used for this project?
+# 3. ติดตั้ง dependencies
+npm install   # หรือ yarn install / bun install
 
-This project is built with:
+# 4. รันโปรเจกต์ในโหมดพัฒนา
+npm run dev
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# 5. Build สำหรับ production
+npm run build
 
-## How can I deploy this project?
+# 6. Preview production build
+npm run preview
+```
 
-Simply open [Lovable](https://lovable.dev/projects/d9c7d8a0-54a5-43bd-a04d-db06248cea54) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+## 🛠️ Tech Stack
+- ⚡ **Vite** – Next Generation Frontend Tooling
+- 🎨 **TailwindCSS** – Utility-first CSS Framework
+- 🟦 **TypeScript** – Typed JavaScript
+- ⚛️ **React** (ถ้ามีการใช้งาน)
+- 📦 **NPM / Bun / Yarn** – Package Manager
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🤝 Contributing
+1. 🍴 Fork repository  
+2. 🌱 Create feature branch (`git checkout -b feature/awesome-feature`)  
+3. 💾 Commit changes (`git commit -m 'Add new feature'`)  
+4. 🚀 Push to branch (`git push origin feature/awesome-feature`)  
+5. 🎉 Open Pull Request  
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+---
+
+## 📜 License
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+<div align="center">
+  Made with ❤️ by <a href="https://github.com/username">Your Name</a>
+</div>
